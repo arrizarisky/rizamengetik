@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear BlindType Storage</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0a0a0c;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 500px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            background: #10b981;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        p {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Reset BlindType Data</h1>
+        <p>Click the button below to clear all saved data and restart onboarding</p>
+        
+        <button onclick="clearStorage()">Clear All Data & Reset</button>
+        <button onclick="window.location.href='/'">Back to App</button>
+        
+        <div class="success" id="success">
+            ✅ Data cleared successfully! <br>
+            <small>You can now close this page and refresh the app.</small>
+        </div>
+    </div>
+
+    <script>
+        function clearStorage() {
+            // Clear all BlindType related localStorage
+            localStorage.removeItem('blindtype_profile');
+            localStorage.removeItem('blindtype_stats');
+            localStorage.removeItem('blindtype_settings');
+            localStorage.removeItem('blindtype_history');
+            localStorage.removeItem('blindtype_local_leaderboard');
+            
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+            
+            // Redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
