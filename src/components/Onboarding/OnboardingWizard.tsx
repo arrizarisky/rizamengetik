@@ -3,20 +3,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle2,
   ChevronRight,
-  Flame,
   Gamepad2,
   Heart,
   Sparkles,
-  Trophy,
-  Volume2,
   Zap,
+  User,
+  Upload,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { soundEngine } from '../../lib/audio';
-
-const AVATAR_OPTIONS = [
-  '🎯', '⚡', '🦉', '🦾', '🧘‍♀️', '🚀', '🔥', '🦊', '🐱', '🧠', '🎧', '💎'
-];
+import { AVATAR_ICONS } from '../../lib/avatarUtils';
 
 const TYPO_OPTIONS = [
   {
@@ -60,9 +56,11 @@ export const OnboardingWizard: React.FC = () => {
 
   // Form State
   const [name, setName] = useState('Typing Master');
-  const [avatar, setAvatar] = useState('🎯');
+  const [avatar, setAvatar] = useState('User');
+  const [avatarType, setAvatarType] = useState<'icon' | 'upload'>('icon');
   const [typoFrequency, setTypoFrequency] = useState('sometimes');
   const [dailyGoalMinutes, setDailyGoalMinutes] = useState(10);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Diagnostic Test State
   const [testInput, setTestInput] = useState('');
@@ -156,11 +154,47 @@ export const OnboardingWizard: React.FC = () => {
       {
         name: name.trim() || 'Typist',
         avatar,
+        avatarType,
         typoFrequency,
         dailyGoalMinutes,
       },
       computedAccuracy
     );
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageUrl = event.target?.result as string;
+        setAvatar(imageUrl);
+        setAvatarType('upload');
+        soundEngine.playThock();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleIconSelect = (iconName: string) => {
+    setAvatar(iconName);
+    setAvatarType('icon');
+    soundEngine.playThock();
+  };
+
+  const getAvatarDisplay = () => {
+    if (avatarType === 'upload') {
+      return (
+        <img
+          src={avatar}
+          alt="Avatar"
+          className="w-full h-full object-cover rounded-3xl"
+        />
+      );
+    } else {
+      const IconComponent = AVATAR_ICONS.find((i) => i.name === avatar)?.Icon || User;
+      return <IconComponent className="w-10 h-10 text-blue-400" />;
+    }
   };
 
   return (
@@ -209,24 +243,43 @@ export const OnboardingWizard: React.FC = () => {
                 <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
                   Choose Your Avatar
                 </label>
-                <div className="grid grid-cols-6 gap-2.5">
-                  {AVATAR_OPTIONS.map((emoji) => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => {
-                        setAvatar(emoji);
-                        soundEngine.playThock();
-                      }}
-                      className={`text-2xl h-12 flex items-center justify-center rounded-xl border transition-all cursor-pointer ${
-                        avatar === emoji
-                          ? 'bg-blue-600/20 border-blue-400 scale-105 shadow-md shadow-blue-500/20'
-                          : 'bg-black/40 border-white/5 hover:border-white/20'
-                      }`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+                
+                {/* Upload Button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-3 px-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  Upload Your Photo
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+
+                {/* Icon Selector */}
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-slate-500 text-center">Or choose an icon</p>
+                  <div className="grid grid-cols-6 gap-2.5">
+                    {AVATAR_ICONS.map(({ name, Icon }) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => handleIconSelect(name)}
+                        className={`h-12 flex items-center justify-center rounded-xl border transition-all cursor-pointer ${
+                          avatar === name && avatarType === 'icon'
+                            ? 'bg-blue-600/20 border-blue-400 scale-105 shadow-md shadow-blue-500/20'
+                            : 'bg-black/40 border-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${avatar === name && avatarType === 'icon' ? 'text-blue-400' : 'text-slate-400'}`} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -525,8 +578,8 @@ export const OnboardingWizard: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="space-y-6 text-center"
             >
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-4xl shadow-xl shadow-blue-500/20">
-                {avatar}
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center shadow-xl shadow-blue-500/20 overflow-hidden">
+                {getAvatarDisplay()}
               </div>
 
               <div className="space-y-1.5">

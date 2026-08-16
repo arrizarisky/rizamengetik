@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  Award,
-  Calendar,
   Check,
-  Flame,
   Heart,
   Save,
-  Sparkles,
   User,
   X,
-  Zap,
+  Upload,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { soundEngine } from '../lib/audio';
-
-const AVATAR_OPTIONS = ['🎯', '⚡', '🦉', '🦾', '🧘‍♀️', '🚀', '🔥', '🦊', '🐱', '🧠', '🎧', '💎'];
+import { AVATAR_ICONS } from '../lib/avatarUtils';
 
 export const ProfileModal: React.FC = () => {
   const {
@@ -27,18 +22,56 @@ export const ProfileModal: React.FC = () => {
 
   const [name, setName] = useState(userProfile.name);
   const [avatar, setAvatar] = useState(userProfile.avatar);
+  const [avatarType, setAvatarType] = useState<'icon' | 'upload'>(userProfile.avatarType || 'icon');
   const [dailyGoalMinutes, setDailyGoalMinutes] = useState(userProfile.dailyGoalMinutes);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isProfileModalOpen) return null;
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageUrl = event.target?.result as string;
+        setAvatar(imageUrl);
+        setAvatarType('upload');
+        soundEngine.playThock();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleIconSelect = (iconName: string) => {
+    setAvatar(iconName);
+    setAvatarType('icon');
+    soundEngine.playThock();
+  };
 
   const handleSave = () => {
     soundEngine.playThock();
     updateProfile({
       name: name.trim() || userProfile.name,
       avatar,
+      avatarType,
       dailyGoalMinutes,
     });
     setIsProfileModalOpen(false);
+  };
+
+  const getAvatarDisplay = () => {
+    if (avatarType === 'upload') {
+      return (
+        <img
+          src={avatar}
+          alt="Avatar"
+          className="w-full h-full object-cover rounded-2xl"
+        />
+      );
+    } else {
+      const IconComponent = AVATAR_ICONS.find((i) => i.name === avatar)?.Icon || User;
+      return <IconComponent className="w-6 h-6 text-blue-400" />;
+    }
   };
 
   const nextLevelXP = userStats.level * 500;
@@ -81,7 +114,9 @@ export const ProfileModal: React.FC = () => {
         <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="text-3xl">{avatar}</span>
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center overflow-hidden">
+                {getAvatarDisplay()}
+              </div>
               <div>
                 <div className="font-bold text-white text-base">{name}</div>
                 <div className="text-xs text-blue-400 font-mono">
@@ -111,27 +146,46 @@ export const ProfileModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Avatar Picker */}
+        {/* Avatar Upload Button */}
         <div className="space-y-2">
           <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">
             Choose Avatar
           </label>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full py-3 px-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            Upload Custom Avatar
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarUpload}
+            className="hidden"
+          />
+        </div>
+
+        {/* Avatar Icon Picker */}
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase font-bold tracking-wider text-slate-400">
+            Or Select Icon
+          </label>
           <div className="grid grid-cols-6 gap-2">
-            {AVATAR_OPTIONS.map((emoji) => (
+            {AVATAR_ICONS.map(({ name, Icon }) => (
               <button
-                key={emoji}
+                key={name}
                 type="button"
-                onClick={() => {
-                  setAvatar(emoji);
-                  soundEngine.playThock();
-                }}
-                className={`text-2xl h-11 flex items-center justify-center rounded-xl border transition-all cursor-pointer ${
-                  avatar === emoji
+                onClick={() => handleIconSelect(name)}
+                className={`h-11 flex items-center justify-center rounded-xl border transition-all cursor-pointer ${
+                  avatar === name && avatarType === 'icon'
                     ? 'bg-blue-600/20 border-blue-400 scale-105 shadow-md shadow-blue-500/20'
                     : 'bg-black/40 border-white/5 hover:border-white/20'
                 }`}
               >
-                {emoji}
+                <Icon className={`w-5 h-5 ${avatar === name && avatarType === 'icon' ? 'text-blue-400' : 'text-slate-400'}`} />
               </button>
             ))}
           </div>

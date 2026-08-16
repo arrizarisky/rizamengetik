@@ -11,7 +11,8 @@ export type GameMode = 'precision' | 'blind' | 'drills' | 'leaderboard';
 export interface UserProfile {
   id: string;
   name: string;
-  avatar: string; // emoji or avatar id
+  avatar: string; // icon name or uploaded image URL
+  avatarType: 'icon' | 'upload'; // Type of avatar
   typoFrequency: string; // from onboarding survey
   dailyGoalMinutes: number; // 5, 10, 15
   initialAccuracy: number; // from diagnostic test

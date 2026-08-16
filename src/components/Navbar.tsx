@@ -1,23 +1,19 @@
 import React from 'react';
 import {
-  Award,
   BarChart3,
-  Eye,
-  EyeOff,
   Flame,
-  Gamepad2,
   Heart,
   Keyboard,
   Settings as SettingsIcon,
-  Sparkles,
-  Target,
   Trophy,
   Volume2,
   Zap,
+  EyeOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { soundEngine } from '../lib/audio';
 import { GameMode, SoundSwitchType } from '../types';
+import { AvatarDisplay } from '../lib/avatarUtils';
 
 export const Navbar: React.FC = () => {
   const {
@@ -197,9 +193,9 @@ export const Navbar: React.FC = () => {
               setIsProfileModalOpen(true);
             }}
             title={`${userProfile.name} - Level ${userStats.level}`}
-            className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 p-1 pl-1 pr-3 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-white/10 text-xs font-semibold text-white transition-all cursor-pointer shadow-sm"
           >
-            <Target className="w-4 h-4 text-blue-400" />
+            <AvatarDisplay userProfile={userProfile} size="small" />
             <span className="hidden sm:inline max-w-[70px] truncate">{userProfile.name}</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/30 font-mono text-blue-200">
               Lv.{userStats.level}

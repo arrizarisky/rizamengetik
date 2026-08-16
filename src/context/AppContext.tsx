@@ -49,7 +49,8 @@ interface AppContextType {
 const DEFAULT_PROFILE: UserProfile = {
   id: 'user-' + Math.random().toString(36).substring(2, 9),
   name: 'Precision Typist',
-  avatar: '🎯',
+  avatar: 'User',
+  avatarType: 'icon',
   typoFrequency: 'sometimes',
   dailyGoalMinutes: 10,
   initialAccuracy: 95.0,

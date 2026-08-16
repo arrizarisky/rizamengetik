@@ -165,7 +165,15 @@ export const Leaderboard: React.FC = () => {
                       {/* User Info */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <span className="text-xl">{entry.avatar || '🎯'}</span>
+                          <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-lg overflow-hidden">
+                            {entry.avatar && entry.avatar.startsWith('data:image') ? (
+                              <img src={entry.avatar} alt={entry.user_name} className="w-full h-full object-cover" />
+                            ) : entry.avatar && entry.avatar.startsWith('http') ? (
+                              <img src={entry.avatar} alt={entry.user_name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{entry.avatar || '🎯'}</span>
+                            )}
+                          </div>
                           <div>
                             <div className="font-semibold text-white flex items-center gap-1.5">
                               {entry.user_name}
