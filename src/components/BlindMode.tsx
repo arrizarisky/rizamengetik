@@ -24,6 +24,7 @@ export const BlindMode: React.FC = () => {
     settings,
     activeHearts,
     selectedLanguage,
+    selectedDifficulty,
     setLanguage,
     recordSessionResult,
     loseHeart,
@@ -58,6 +59,7 @@ export const BlindMode: React.FC = () => {
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [isGameFailed, setIsGameFailed] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const currentCharRef = useRef<HTMLSpanElement>(null);
 
   // Load new phrase for blind typing
   const loadNewBlindSentence = (lang: Language = selectedLanguage) => {
@@ -269,6 +271,17 @@ export const BlindMode: React.FC = () => {
     return () => window.removeEventListener('click', handleGlobalClick);
   }, [isGameOver, isGameFailed, anyModalOpen]);
 
+  // Auto-scroll to keep current character visible when in peek mode
+  useEffect(() => {
+    if (!isCurtainClosed && currentCharRef.current) {
+      currentCharRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center',
+      });
+    }
+  }, [currentIndex, isCurtainClosed]);
+
   const finishBlindSession = (passed: boolean) => {
     const end = Date.now();
     setIsGameOver(true);
@@ -283,13 +296,23 @@ export const BlindMode: React.FC = () => {
     const wpm = Math.round(correctStrokes / 5 / minutes) || 0;
     const cpm = Math.round(correctStrokes / minutes) || 0;
 
-    // Blind mode gets +20% score bonus for pure sensory mastery
+    // Difficulty multiplier (blind mode uses selectedDifficulty from context)
+    const difficultyMultipliers: Record<string, number> = {
+      easy: 1.0,
+      medium: 1.3,
+      hard: 1.6,
+      code: 2.0,
+    };
+    const difficultyMultiplier = difficultyMultipliers[selectedDifficulty] || 1.3;
+
+    // Blind mode gets +20% base score bonus for pure sensory mastery
     const baseScore = Math.round(finalAccuracy * 100);
     const comboScore = maxStreak * 30;
-    const finalScore = Math.max(
+    const rawScore = Math.max(
       150,
       baseScore + comboScore - backspaceCount * 15 - errorCount * 30
     );
+    const finalScore = Math.round(rawScore * difficultyMultiplier);
 
     soundEngine.playSuccessFanfare();
 
@@ -297,7 +320,7 @@ export const BlindMode: React.FC = () => {
       id: 'blind-session-' + Date.now(),
       mode: 'blind',
       language: selectedLanguage,
-      difficulty: 'medium',
+      difficulty: selectedDifficulty,
       accuracy: finalAccuracy,
       rawAccuracy: rawAcc,
       wpm,
@@ -549,7 +572,7 @@ export const BlindMode: React.FC = () => {
             </div>
           ) : (
             /* Revealed Text (When peek mode is active) */
-            <div className="font-mono text-xl sm:text-2xl leading-relaxed text-left w-full">
+            <div className="font-mono text-xl sm:text-2xl leading-relaxed text-left w-full overflow-y-auto max-h-[300px] py-2">
               {targetText.split('').map((char, index) => {
                 const status = charStatuses[index];
                 const isCurrent = index === currentIndex;
@@ -561,6 +584,7 @@ export const BlindMode: React.FC = () => {
                 return (
                   <span
                     key={index}
+                    ref={isCurrent ? currentCharRef : null}
                     className={`${styleClass} ${
                       isCurrent ? 'bg-blue-500/20 text-white rounded px-0.5 ring-2 ring-blue-500' : ''
                     }`}
