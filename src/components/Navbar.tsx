@@ -14,6 +14,7 @@ import { useApp } from '../context/AppContext';
 import { soundEngine } from '../lib/audio';
 import { GameMode, SoundSwitchType } from '../types';
 import { AvatarDisplay } from '../lib/avatarUtils';
+import LogoIcon from '../../Logo.png'
 
 export const Navbar: React.FC = () => {
   const {
@@ -62,7 +63,7 @@ export const Navbar: React.FC = () => {
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
             <img
-              src="assets/Logo.png"
+              src={LogoIcon}
               alt="BlindType Logo"
               className="w-8 h-8 rounded-lg group-hover:scale-105 transition-transform object-cover"
             />
