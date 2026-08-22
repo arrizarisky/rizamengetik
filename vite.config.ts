@@ -31,13 +31,8 @@ export default defineConfig(({ mode }) => {
         },
       },
       sourcemap: false,
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
+      minify: 'esbuild',
+      target: 'es2015',
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
