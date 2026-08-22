@@ -1,0 +1,22 @@
+# Files to ignore during Vercel deployment
+node_modules
+.git
+.env
+.env.local
+*.log
+.DS_Store
+.vscode
+.idea
+
+# Documentation files (optional, uncomment if you want to exclude)
+# README.md
+# DEPLOYMENT.md
+# BUGFIX.md
+# AI_TEXT_GENERATION.md
+
+# Test files
+test-gemini-api.html
+clear-storage.html
+
+# Source control
+.gitignore

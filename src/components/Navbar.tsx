@@ -61,9 +61,11 @@ export const Navbar: React.FC = () => {
             onClick={() => setMode('precision')}
             className="flex items-center gap-3 text-left group cursor-pointer"
           >
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] group-hover:scale-105 transition-transform">
-              B
-            </div>
+            <img
+              src="assets/Logo.png"
+              alt="BlindType Logo"
+              className="w-8 h-8 rounded-lg group-hover:scale-105 transition-transform object-cover"
+            />
             <div>
               <div className="flex items-center gap-2 font-semibold text-lg tracking-tight text-white">
                 BlindType

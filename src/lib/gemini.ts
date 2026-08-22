@@ -16,6 +16,8 @@ class GeminiTextGenerator {
   private apiKey: string;
   private model: string;
   private baseUrl: string;
+  private lastCallTime: number = 0;
+  private minCallInterval: number = 2000; // Minimum 2 seconds between calls
 
   constructor(config: GeminiConfig) {
     this.apiKey = config.apiKey;
@@ -23,45 +25,72 @@ class GeminiTextGenerator {
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
   }
 
-  private async callGemini(prompt: string): Promise<string> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/${this.model}:generateContent?key=${this.apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: prompt,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.9,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 2048,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.candidates[0]?.content?.parts[0]?.text || '';
-    } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      throw error;
+  private async waitForRateLimit(): Promise<void> {
+    const now = Date.now();
+    const timeSinceLastCall = now - this.lastCallTime;
+    
+    if (timeSinceLastCall < this.minCallInterval) {
+      const waitTime = this.minCallInterval - timeSinceLastCall;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
     }
+    
+    this.lastCallTime = Date.now();
+  }
+
+  private async callGemini(prompt: string, retries: number = 3): Promise<string> {
+    // Wait for rate limit before making call
+    await this.waitForRateLimit();
+    
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const response = await fetch(
+          `${this.baseUrl}/${this.model}:generateContent?key=${this.apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: prompt,
+                    },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.9,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+              },
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            // Rate limit hit, wait longer and retry
+            const waitTime = Math.pow(2, attempt) * 3000; // Exponential backoff: 3s, 6s, 12s
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          throw new Error(`Gemini API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.candidates[0]?.content?.parts[0]?.text || '';
+      } catch (error) {
+        if (attempt === retries - 1) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    
+    throw new Error('Failed to call Gemini API after all retries');
   }
 
   private getPromptForDifficulty(options: GenerateTextOptions): string {
@@ -214,9 +243,9 @@ export const initializeGemini = (apiKey: string) => {
 export const getGeminiInstance = (): GeminiTextGenerator => {
   if (!geminiInstance) {
     // Try to get API key from environment
-    const apiKey = import.meta.env.GEMINI_API_KEY || '';
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey) {
-      throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY in .env file.');
+      throw new Error('Gemini API key not configured. Please set VITE_GEMINI_API_KEY in environment variables.');
     }
     geminiInstance = new GeminiTextGenerator({ apiKey });
   }

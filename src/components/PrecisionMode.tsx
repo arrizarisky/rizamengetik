@@ -314,12 +314,22 @@ export const PrecisionMode: React.FC = () => {
     const wpm = Math.round(correctStrokes / 5 / minutes) || 0;
     const cpm = Math.round(correctStrokes / minutes) || 0;
 
+    // Difficulty multiplier
+    const difficultyMultipliers: Record<Difficulty, number> = {
+      easy: 1.0,
+      medium: 1.3,
+      hard: 1.6,
+      code: 2.0,
+    };
+    const difficultyMultiplier = difficultyMultipliers[selectedDifficulty] || 1.0;
+
     // Accuracy-First Score
     const baseScore = Math.round(finalAccuracy * 80);
     const comboScore = maxStreak * 25;
     const backspaceDeduction = backspaceCount * 15;
     const errorDeduction = errorCount * 30;
-    const finalScore = Math.max(100, baseScore + comboScore - backspaceDeduction - errorDeduction);
+    const rawScore = Math.max(100, baseScore + comboScore - backspaceDeduction - errorDeduction);
+    const finalScore = Math.round(rawScore * difficultyMultiplier);
 
     soundEngine.playSuccessFanfare();
 
